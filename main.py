@@ -124,7 +124,7 @@ if __name__ == "__main__":
         if opt['task'] == 'denoise':
             opt['dataroot'] = f'../data/Salinas/test/gauss_{opt["task_params"]}/Salinas_channel_cropped.mat'
         if opt['task'] == 'sr':
-            opt['dataroot'] = f'../data/Salinas/test/gauss_sr_{opt["task_params"]}/Salinas_channel_cropped.mat'
+            opt['dataroot'] = f'{rd}/data/Salinas/test/gauss_sr_{opt["task_params"]}/Salinas_channel_cropped.mat'
         if opt['task'] == 'inpainting':
             opt['dataroot'] = f'../data/Salinas/test/gauss_inpainting_{opt["task_params"]}/Salinas_channel_cropped.mat'
 
@@ -142,7 +142,8 @@ if __name__ == "__main__":
     elif param['task'] == 'sr':
         k_s = 9
         sig = sqrt(4 ** 2 / (8 * log(2)))
-        scale = data['scale'].item()
+        scale=0,25
+        #scale = data['scale'].item()
         kernel = blur_kernel(k_s, sig)
         kernel = th.from_numpy(kernel).repeat(Ch,1,1,1).to(device)
         blur = partial(nF.conv2d, weight=kernel, padding=int((k_s - 1) / 2), groups=Ch)
