@@ -46,7 +46,7 @@ def parse_args_and_config():
     parser.add_argument('--beta_linear_start', type=float, default=1e-6)
     parser.add_argument('--beta_linear_end', type=float, default=1e-2)
     parser.add_argument('--cosine_s', type=float, default=0)
-    parser.add_argument('--no_rrqr', default=False, action='store_true')
+    parser.add_argument('--no_rrqr', default=True, action='store_true')
 
     parser.add_argument('-gpu', '--gpu_ids', type=str, default="1")
     parser.add_argument('-seed', '--seed', type=int, default=0)
@@ -68,7 +68,7 @@ def parse_args_and_config():
 if __name__ == "__main__":
     warnings.filterwarnings('ignore')
     opt = parse_args_and_config()
-
+    rd=opt['dataroot']
     gpu_ids = opt['gpu_ids']
     if gpu_ids:
         os.environ['CUDA_VISIBLE_DEVICES'] = gpu_ids
@@ -106,7 +106,7 @@ if __name__ == "__main__":
 
     if opt['dataname'] == 'Houston':
         if opt['task'] == 'denoise':
-            opt['dataroot'] = f'../data/Houston18/test/gauss_{opt["task_params"]}/Houston_channel_cropped.mat'
+            opt['dataroot'] = f'{rd}/data/Houston18/test/gauss_{opt["task_params"]}/Houston_channel_cropped.mat'
         if opt['task'] == 'sr':
             opt['dataroot'] = f'../data/Houston18/test/gauss_sr_{opt["task_params"]}/Houston_channel_cropped.mat'
         if opt['task'] == 'inpainting':
@@ -116,7 +116,7 @@ if __name__ == "__main__":
         if opt['task'] == 'denoise':
             opt['dataroot'] = f'../data/WDC/test/gauss_{opt["task_params"]}/wdc_cropped.mat'
         if opt['task'] == 'sr':
-            opt['dataroot'] = f'../data/WDC/test/gauss_sr_{opt["task_params"]}/wdc_cropped.mat'
+            opt['dataroot'] = f'{rd}/data/WDC/test/gauss_sr_{opt["task_params"]}/wdc_cropped.mat'
         if opt['task'] == 'inpainting':
             opt['dataroot'] = f'../data/WDC/test/gauss_inpainting_{opt["task_params"]}/wdc_cropped.mat'
 
