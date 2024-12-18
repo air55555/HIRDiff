@@ -142,7 +142,7 @@ if __name__ == "__main__":
     elif param['task'] == 'sr':
         k_s = 9
         sig = sqrt(4 ** 2 / (8 * log(2)))
-        scale=0,25
+        scale=0.25
         #scale = data['scale'].item()
         kernel = blur_kernel(k_s, sig)
         kernel = th.from_numpy(kernel).repeat(Ch,1,1,1).to(device)
