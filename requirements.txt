@@ -1,0 +1,9 @@
+imgvision==0.1.7.1
+matplotlib==3.7.2
+numpy==1.24.3
+scipy==1.11.3
+scikit-image
+##skimage==0.0
+##torch==1.12.1+cu113
+#https://download.pytorch.org/whl/cu113/torch-1.12.1%2Bcu113-cp39-cp39-win_amd64.whl
+tqdm==4.66.1
