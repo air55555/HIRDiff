@@ -19,7 +19,6 @@ from utility import *
 from skimage.restoration import denoise_nl_means, estimate_sigma
 
 
-
 class ModelMeanType(enum.Enum):
     """
     Which type of output the model predicts.
@@ -55,13 +54,15 @@ class LossType(enum.Enum):
     def is_vb(self):
         return self == LossType.KL or self == LossType.RESCALED_KL
 
+
 class Param(th.nn.Module):
     def __init__(self, data):
         super(Param, self).__init__()
         self.E = Para.Parameter(data=data)
-    
-    def forward(self,):
+
+    def forward(self, ):
         return self.E
+
 
 class GaussianDiffusion:
     """
@@ -77,9 +78,9 @@ class GaussianDiffusion:
     """
 
     def __init__(
-        self,
-        *,
-        betas
+            self,
+            *,
+            betas
     ):
 
         # Use float64 for accuracy.
@@ -94,57 +95,55 @@ class GaussianDiffusion:
         self.alphas_cumprod_next = np.append(self.alphas_cumprod[1:], 0.0)
         self.sqrt_alphas_cumprod_prev = np.sqrt(np.append(1., self.alphas_cumprod))
 
-
-
     def p_sample_loop(
-        self,
-        model,
-        shape,
-        Rr,
-        step=None,
-        noise=None,
-        clip_denoised=True,
-        denoised_fn=None,
-        model_condition=None,
-        param=None,
-        save_root=None,
-        progress=True
+            self,
+            model,
+            shape,
+            Rr,
+            step=None,
+            noise=None,
+            clip_denoised=True,
+            denoised_fn=None,
+            model_condition=None,
+            param=None,
+            save_root=None,
+            progress=True
     ):
         finalX = None
         finalE = None
 
         for (sample, E) in self.p_sample_loop_progressive(
-            model,
-            shape,
-            Rr,
-            step=step,
-            noise=noise,
-            clip_denoised=clip_denoised,
-            denoised_fn=denoised_fn,
-            model_condition=model_condition,
-            param=param,
-            save_root=save_root
+                model,
+                shape,
+                Rr,
+                step=step,
+                noise=noise,
+                clip_denoised=clip_denoised,
+                denoised_fn=denoised_fn,
+                model_condition=model_condition,
+                param=param,
+                save_root=save_root
         ):
             finalX = sample
             finalE = E
-             
+
         return finalX["sample"], finalE
         # return finalX["pred_xstart"], finalE
 
     def p_sample_loop_progressive(
-        self,
-        model,
-        shape,
-        Rr,
-        step=None,
-        noise=None,
-        clip_denoised=True,
-        model_condition=None,
-        device=None,
-        param=None,
-        denoised_fn=None,
-        save_root=None   # use it for output intermediate predictions
-        ):
+            self,
+            model,
+            shape,
+            Rr,
+            step=None,
+            noise=None,
+            clip_denoised=True,
+            model_condition=None,
+            device=None,
+            param=None,
+            denoised_fn=None,
+            save_root=None  # use it for output intermediate predictions
+    ):
         Bb, Cc, Hh, Ww = shape
         Rr = Rr
         if device is None:
@@ -153,11 +152,11 @@ class GaussianDiffusion:
         if noise is not None:
             img = noise
         else:
-            img = th.randn((Bb, Rr, Hh, Ww), device=device) # 初始大小是[B, r, H, W]
+            img = th.randn((Bb, Rr, Hh, Ww), device=device)  # 初始大小是[B, r, H, W]
 
         if step is None:
             step = self.num_timesteps
-        indices = list(np.arange(0, self.num_timesteps, self.num_timesteps//step))[::-1]
+        indices = list(np.arange(0, self.num_timesteps, self.num_timesteps // step))[::-1]
         indices_next = indices[1:] + [-1]
         from tqdm import tqdm
         pbar = tqdm(enumerate(zip(indices, indices_next)), total=len(indices))
@@ -170,7 +169,7 @@ class GaussianDiffusion:
         E = E @ coef
 
         self.best_result, self.best_psnr = None, 0
-        norm_list, psnr_list, result_list = [], [], []
+        norm_list, psnr_list, bwssim_list, result_list = [], [], [], []
         alphas_bar_list = []
         for iteration, (i, j) in pbar:
             t = th.tensor([i] * shape[0], device=device)
@@ -218,7 +217,6 @@ class GaussianDiffusion:
             xt_next = xt_next - norm_gradX
             del norm_gradX
 
-
             out = {"sample": xt_next, "pred_xstart": pred_xstart}
             yield out, E
             img = out["sample"]
@@ -228,14 +226,17 @@ class GaussianDiffusion:
             # evaluate
             alphas_bar_list.append(alphas_bar.item())
             norm_list.append(loss_condition.item())
+
+            bwssim_current = np.mean(cal_bwssim(xhat, model_condition['gt']))
             psnr_current = np.mean(cal_bwpsnr(xhat, model_condition['gt']))
             if psnr_current > self.best_psnr:
                 self.best_psnr = psnr_current
                 self.best_result = xhat.clone()
 
             psnr_list.append(psnr_current)
-            pbar.set_description("%d/%d, psnr: %.2f" % (iteration, len(indices), psnr_list[-1]))
-
+            bwssim_list.append(bwssim_current)
+            pbar.set_description(
+                "%d/%d, psnr: %.2f , bwssim: %.2f" % (iteration, len(indices), psnr_list[-1], bwssim_list[-1]))
 
         # plt.plot(alphas_bar_list, c='r', label='alphas_bar')
         # plt.legend()
@@ -245,16 +246,19 @@ class GaussianDiffusion:
         plt.ylabel('PSNR')
         plt.show()
 
+        plt.plot(bwssim_list)
+        plt.ylabel('BWSSIM')
+        plt.show()
+
         # plt.plot(norm_list)
         # plt.ylabel('guidance function loss')
         # plt.show()
-
 
     def loss_sr(self, param, model_condition, xhat):
         input = model_condition['input']
         weight = 1
         loss_1 = param['eta1'] * (th.norm(weight * (input -
-                    model_condition['transform'](xhat)), p=2)) ** 2 / xhat.numel()
+                                                    model_condition['transform'](xhat)), p=2)) ** 2 / xhat.numel()
 
         # regularization term
         weight_dx, weight_dy, weight_dz = 1, 1, 1
@@ -263,7 +267,6 @@ class GaussianDiffusion:
                   param['eta2'] * th.norm(weight_dy * xhat_dy, p=1) +
                   param['eta2'] * th.norm(weight_dz * xhat_dz, p=1)
                   ) / xhat.numel()
-
 
         loss_condition = loss_1 + loss_2
         return loss_condition
@@ -280,9 +283,9 @@ class GaussianDiffusion:
         weight_dx, weight_dy, weight_dz = 1, 1, 1
         xhat_dx, xhat_dy, xhat_dz = diff_3d(xhat, keepdim=False)
         norm_rank = 1
-        loss_2 = (param['eta2'] * th.norm(weight_dx * xhat_dx, p=norm_rank) **norm_rank / xhat_dx.numel() +
-                  param['eta2'] * th.norm(weight_dy * xhat_dy, p=norm_rank) **norm_rank / xhat_dy.numel() +
-                  param['eta2'] * th.norm(weight_dz * xhat_dz, p=norm_rank) **norm_rank / xhat_dz.numel()
+        loss_2 = (param['eta2'] * th.norm(weight_dx * xhat_dx, p=norm_rank) ** norm_rank / xhat_dx.numel() +
+                  param['eta2'] * th.norm(weight_dy * xhat_dy, p=norm_rank) ** norm_rank / xhat_dy.numel() +
+                  param['eta2'] * th.norm(weight_dz * xhat_dz, p=norm_rank) ** norm_rank / xhat_dz.numel()
                   )
 
         loss_condition = loss_1 + loss_2
@@ -293,7 +296,8 @@ class GaussianDiffusion:
 
         # fidelity term
         weight = 1
-        loss_1 = param['eta1'] * (th.norm(weight * (input - model_condition['transform'](xhat)), p=2)) ** 2 / xhat.numel()
+        loss_1 = param['eta1'] * (
+            th.norm(weight * (input - model_condition['transform'](xhat)), p=2)) ** 2 / xhat.numel()
 
         # regularization term
         x = model_condition['input']
@@ -317,31 +321,28 @@ class GaussianDiffusion:
                   param['eta2'] * th.norm(weight_dz * xhat_dz, p=1)
                   ) / xhat.numel()
 
-
         loss_condition = loss_1 + loss_2
         return loss_condition
 
-
-
     def p_sample(
-        self,
-        model,
-        x,
-        t,
-        t_next=None,
-        clip_denoised=True,
-        denoised_fn=None,
-        eps=1e-9,
+            self,
+            model,
+            x,
+            t,
+            t_next=None,
+            clip_denoised=True,
+            denoised_fn=None,
+            eps=1e-9,
     ):
         # predict x_start
         B = x.shape[0]
         noise_level = th.FloatTensor([self.sqrt_alphas_cumprod_prev[int(t.item()) + 1]]).repeat(B, 1).to(x.device)
-        noise_level_next = th.FloatTensor([self.sqrt_alphas_cumprod_prev[int(t_next.item()) + 1]]).repeat(B, 1).to(x.device)
+        noise_level_next = th.FloatTensor([self.sqrt_alphas_cumprod_prev[int(t_next.item()) + 1]]).repeat(B, 1).to(
+            x.device)
         model_output = model(x, noise_level)
         pred_xstart = (x - model_output * (1 - noise_level).sqrt()) / noise_level.sqrt()
         if clip_denoised:
             pred_xstart = pred_xstart.clamp(-1, 1)
-
 
         # next step
         eta = 0
