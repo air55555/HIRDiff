@@ -48,7 +48,7 @@ def parse_args_and_config():
     parser.add_argument('--cosine_s', type=float, default=0)
     parser.add_argument('--no_rrqr', default=True, action='store_true')
 
-    parser.add_argument('-gpu', '--gpu_ids', type=str, default="1")
+    parser.add_argument('-gpu', '--gpu_ids', type=str, default=None)
     parser.add_argument('-seed', '--seed', type=int, default=0)
     parser.add_argument('-bs', '--batch_size', type=int, default=1)
     parser.add_argument('-sn', '--samplenum', type=int, default=1)
@@ -127,7 +127,7 @@ if __name__ == "__main__":
         if opt['task'] == 'sr':
             opt['dataroot'] = f'{rd}/data/Salinas/test/gauss_sr_{opt["task_params"]}/Salinas_channel_cropped.mat'
         if opt['task'] == 'inpainting':
-            opt['dataroot'] = f'../data/Salinas/test/gauss_inpainting_{opt["task_params"]}/Salinas_channel_cropped.mat'
+            opt['dataroot'] = f'{rd}/data/Salinas/test/gauss_inpainting_{opt["task_params"]}/Salinas_channel_cropped.mat'
 
 
     data = sio.loadmat(opt['dataroot'])
