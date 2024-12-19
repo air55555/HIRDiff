@@ -169,7 +169,7 @@ class GaussianDiffusion:
         E = E @ coef
 
         self.best_result, self.best_psnr = None, 0
-        norm_list, psnr_list, bwssim_list, result_list = [], [], [], []
+        norm_list, psnr_list, result_list , bwssim_list= [], [], [],[]
         alphas_bar_list = []
         for iteration, (i, j) in pbar:
             t = th.tensor([i] * shape[0], device=device)
@@ -234,6 +234,8 @@ class GaussianDiffusion:
                 self.best_result = xhat.clone()
 
             psnr_list.append(psnr_current)
+            pbar.set_description("%d/%d, psnr: %.2f" % (iteration, len(indices), psnr_list[-1]))
+
             bwssim_list.append(bwssim_current)
             pbar.set_description(
                 "%d/%d, psnr: %.2f , bwssim: %.2f" % (iteration, len(indices), psnr_list[-1], bwssim_list[-1]))
@@ -249,11 +251,6 @@ class GaussianDiffusion:
         plt.plot(bwssim_list)
         plt.ylabel('BWSSIM')
         plt.show()
-
-        # plt.plot(norm_list)
-        # plt.ylabel('guidance function loss')
-        # plt.show()
-
     def loss_sr(self, param, model_condition, xhat):
         input = model_condition['input']
         weight = 1
