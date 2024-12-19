@@ -7,4 +7,4 @@ scikit-image
 ##torch==1.12.1+cu113
 #https://download.pytorch.org/whl/cu113/torch-1.12.1%2Bcu113-cp39-cp39-win_amd64.whl
 tqdm==4.66.1
-spectral
+#conda install conda-forge::spectral

@@ -67,6 +67,7 @@ def parse_args_and_config():
 
 if __name__ == "__main__":
     warnings.filterwarnings('ignore')
+    display_envi(f'./out/gt.hdr')
     opt = parse_args_and_config()
     rd=opt['dataroot']
     gpu_ids = opt['gpu_ids']

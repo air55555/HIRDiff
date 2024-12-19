@@ -4,10 +4,46 @@ import torch
 from matplotlib import pyplot as plt
 import torch
 import numpy as np
+import  spectral
 from spectral import envi
+
+
+
+
+def display_envi(file_path):
+    """
+    Displays an ENVI file as an image.
+
+    Parameters:
+    file_path (str): Path to the ENVI file (.hdr or .dat file).
+
+    Returns:
+    None
+    """
+    try:
+        # Load the ENVI image
+        img = spectral.open_image(file_path)
+
+        # Display the first band or RGB (if available)
+        if img.nbands == 1:
+            spectral.imshow(img)
+        elif img.nbands >= 3:
+            spectral.imshow(img, bands=(0, 1, 2))  # Adjust bands as needed for RGB
+        else:
+            print("Unable to determine displayable bands.")
+
+        plt.show()
+    except Exception as e:
+        print(f"Error displaying ENVI file: {e}")
+
+
+# Example usage
+#display_envi('example_file.hdr')
+
+
 def save_envi(tensor,fname):
     # Example tensor
-    tensor = torch.randn(1, 191, 256, 256)  # Replace with your actual tensor
+    #tensor = torch.randn(1, 191, 256, 256)  # Replace with your actual tensor
 
     # Remove batch dimension and permute to match ENVI format (bands, rows, cols)
     hyperspectral_data = tensor.squeeze(0).numpy()  # Shape: [191, 256, 256]
@@ -25,7 +61,7 @@ def save_envi(tensor,fname):
     }
 
     # Save the image
-    envi.save_image(f"{output_file}.hdr", hyperspectral_data, dtype=np.float32, metadata=metadata)
+    envi.save_image(f"{output_file}.hdr", hyperspectral_data, dtype=np.float32, metadata=metadata,force=True)
 
 def my_diff(x):
     diff_1, diff_2, diff_3 = torch.zeros_like(x), torch.zeros_like(x), torch.zeros_like(x)
