@@ -171,6 +171,7 @@ class GaussianDiffusion:
         self.best_result, self.best_psnr = None, 0
         norm_list, psnr_list, result_list , bwssim_list= [], [], [],[]
         alphas_bar_list = []
+        save_envi(model_condition['gt'], f'./out/gt')
         for iteration, (i, j) in pbar:
             t = th.tensor([i] * shape[0], device=device)
             t_next = th.tensor([j] * shape[0], device=device)
@@ -226,7 +227,8 @@ class GaussianDiffusion:
             # evaluate
             alphas_bar_list.append(alphas_bar.item())
             norm_list.append(loss_condition.item())
-
+            save_envi(xhat,f'./out/sr_{iteration}') #without .hdr
+            display_envi(f'./out/sr_{iteration}.hdr')
             bwssim_current = np.mean(cal_bwssim(xhat, model_condition['gt']))
             psnr_current = np.mean(cal_bwpsnr(xhat, model_condition['gt']))
             if psnr_current > self.best_psnr:
