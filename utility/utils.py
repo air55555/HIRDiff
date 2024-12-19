@@ -2,6 +2,30 @@ import random
 import numpy as np
 import torch
 from matplotlib import pyplot as plt
+import torch
+import numpy as np
+from spectral import envi
+def save_envi(tensor,fname):
+    # Example tensor
+    tensor = torch.randn(1, 191, 256, 256)  # Replace with your actual tensor
+
+    # Remove batch dimension and permute to match ENVI format (bands, rows, cols)
+    hyperspectral_data = tensor.squeeze(0).numpy()  # Shape: [191, 256, 256]
+
+    # Save as ENVI file
+    output_file = fname
+    metadata = {
+        "description": "Sample hyperspectral image",
+        "lines": 256,
+        "samples": 256,
+        "bands": 191,
+        "interleave": "bil",  # Band-interleaved by line
+        "data type": 4,       # Floating point (32-bit)
+        "byte order": 0,      # Little-endian
+    }
+
+    # Save the image
+    envi.save_image(f"{output_file}.hdr", hyperspectral_data, dtype=np.float32, metadata=metadata)
 
 def my_diff(x):
     diff_1, diff_2, diff_3 = torch.zeros_like(x), torch.zeros_like(x), torch.zeros_like(x)

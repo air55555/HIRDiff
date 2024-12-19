@@ -72,8 +72,9 @@ if __name__ == "__main__":
     gpu_ids = opt['gpu_ids']
     if gpu_ids:
         os.environ['CUDA_VISIBLE_DEVICES'] = gpu_ids
-        device = th.device("cuda")
+
         print('export CUDA_VISIBLE_DEVICES=' + gpu_ids)
+        device = th.device(f'cuda')
     else:
         device = th.device("cpu")
         print('use cpu')
@@ -108,7 +109,7 @@ if __name__ == "__main__":
         if opt['task'] == 'denoise':
             opt['dataroot'] = f'{rd}/data/Houston18/test/gauss_{opt["task_params"]}/Houston_channel_cropped.mat'
         if opt['task'] == 'sr':
-            opt['dataroot'] = f'../data/Houston18/test/gauss_sr_{opt["task_params"]}/Houston_channel_cropped.mat'
+            opt['dataroot'] = f'{rd}/data/Houston18/test/gauss_sr_{opt["task_params"]}/Houston_channel_cropped.mat'
         if opt['task'] == 'inpainting':
             opt['dataroot'] = f'../data/Houston18/test/gauss_inpainting_{opt["task_params"]}/Houston_channel_cropped.mat'
 
